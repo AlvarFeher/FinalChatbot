@@ -29,7 +29,7 @@ async def stopCommand(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("cya buddy")
 
 
-def get_movie_recommendations():
+def getAllMovies():
     movies = []
     with open('data/series_data.csv', 'r') as file:
         reader = csv.reader(file)
@@ -46,6 +46,7 @@ def get_movie_recommendations():
                 'star4': row[7],
                 'no_of_votes': row[8]
             }
+            # print(movie)
         # Append the movie to the list
         movies.append(movie)
     return movies
@@ -100,7 +101,7 @@ async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Main
 if __name__ == '__main__':
-    movies = get_movie_recommendations()
+    movies = getAllMovies()
     print('Starting bot...')
     app = Application.builder().token(TOKEN).build()
 
