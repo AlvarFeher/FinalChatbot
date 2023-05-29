@@ -59,10 +59,10 @@ async def handleResponse(text: str) -> str:
         return 'hi buddy'
     if 'trailer' in processed:
         return search_video(processed, YT_key)
-    if 'how many' or 'how much' in processed:
+    if 'how many' in processed:
         return 'i have a database with +2000 tv series'
-
-    return 'i dont understand'
+    else:
+        return 'i dont understand'
 
 
 async def handleMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
