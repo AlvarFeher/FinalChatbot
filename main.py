@@ -31,7 +31,7 @@ async def stopCommand(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def getAllMovies():
     movies = []
-    with open('data/series_data.csv', 'r') as file:
+    with open('data/series_data.csv', 'r', encoding='utf-8') as file:
         reader = csv.reader(file)
         next(reader)
         for row in reader:
