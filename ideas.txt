@@ -1,0 +1,5 @@
+que el user pregunte, cuantas tv series conoces? 
+
+hacer que si el user escribe random, que te de una serie random del dataset
+
+sentiment analysis, aquello que evalua como respondes si es happy o no
