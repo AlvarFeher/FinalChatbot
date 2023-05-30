@@ -1,13 +1,4 @@
 from nltk.stem.lancaster import LancasterStemmer
-import tensorflow as tf
-from tensorflow.keras.preprocessing.text import Tokenizer
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout, Embedding, Flatten
-
-import json
-import numpy as np
-from telegram import *
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -16,91 +7,82 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+from telegram import *
 import spacy
 import json
 import random
 import tensorflow as tf
 import tflearn
+import numpy
 from googleapiclient.discovery import build
 from typing import Final
 import csv
 import nltk
+nltk.download('punkt')
 stemmer = LancasterStemmer()
 
 TOKEN: Final = "6072166464:AAGK_3kc39vEAGwhNR2on90NZ95KXNNpQ-Y"  # bot token
 BOT_USERNAME: Final = '@MecagoensatanasBot'
 YT_key: Final = 'AIzaSyBxNofXCt8LaoBJri2_lBhJGFWSMXM-oCE'
 
-
-# Load the data
+# neural network
 with open("data/intents.json") as file:
     data = json.load(file)
 
-# Extract the training data
-sentences = []
-labels = []
-for intent in data["intents"]:
-    for pattern in intent["patterns"]:
-        sentences.append(pattern)
-        labels.append(intent["tag"])
+words = []  # words we have
+labels = []  # word classification tag
+docs_x = []
+docs_y = []
 
-# Tokenize the sentences
-tokenizer = Tokenizer()
-tokenizer.fit_on_texts(sentences)
-word_index = tokenizer.word_index
+for intent in data['intents']:
+    for pattern in intent['patterns']:
+        # stemming : get each word and bringit down to the root word
+        wrds = nltk.word_tokenize(pattern)
+        words.extend(wrds)
+        docs_x.append(wrds)
+        docs_y.append(intent["tag"])
+    if intent['tag'] not in labels:
+        labels.append(intent['tag'])
 
-# Convert the sentences to sequences
-sequences = tokenizer.texts_to_sequences(sentences)
+words = [stemmer.stem(w.lower()) for w in words if w != "?"]
+words = sorted(list(set(words)))  # all the words we have
 
-# Pad the sequences
-maxlen = 20
-padded_sequences = pad_sequences(sequences, maxlen=maxlen)
+labels = sorted(labels)
 
-# Convert the labels to one-hot vectors
-labels = np.array(labels)
-unique_labels = np.unique(labels)
-label_to_index = dict((label, index)
-                      for index, label in enumerate(unique_labels))
-index_to_label = dict((index, label)
-                      for index, label in enumerate(unique_labels))
-label_indices = np.array([label_to_index[label] for label in labels])
-one_hot_labels = tf.keras.utils.to_categorical(label_indices)
+# create bag of words to train the model -> encoding
+training = []
+output = []
 
-# Define the model
-model = Sequential([
-    Embedding(len(word_index) + 1, 128, input_length=maxlen),
-    Flatten(),
-    Dense(128, activation="relu"),
-    Dropout(0.5),
-    Dense(len(unique_labels), activation="softmax")
-])
+out_empty = [0 for _ in range(len(labels))]
+for x, doc in enumerate(docs_x):
+    bag = []
+    wrds = [stemmer.stem(w.lower()) for w in doc]
+    for w in words:
+        if w in wrds:
+            bag.append(1)
+        else:
+            bag.append(0)
 
-# Compile the model
-model.compile(loss="categorical_crossentropy",
-              optimizer="adam", metrics=["accuracy"])
+    # create ouptu row with indexes where the label matches
+    output_row = out_empty[:]
+    output_row[labels.index(docs_y[x])] = 1
 
-# Train the model
-model.fit(padded_sequences, one_hot_labels,
-          epochs=1000, batch_size=8, verbose=1)
+    training.append(bag)
+    output.append(output_row)
 
-# Save the model
-model.save("model.h5")
+training = numpy.array(training)
+output = numpy.array(output)
 
-# predict to which category the input belongs to
+tf.reset_default_graph()
+net = tflearn.input_data(shape=[None, len(training[0])])
+net = tflearn.fully_connected(net, 8)  # 8 neurons
+net = tflearn.fully_connected(net, 8)
+net = tflearn.fully_connected(net, len(output[0]), activation="sofmax")
+net = tflearn.regression(net)
+model = tflearn.DNN(net)  # train the model
 
-
-def predict_tag(sentence):
-    # Convert the sentence to a sequence
-    sequence = tokenizer.texts_to_sequences([sentence])
-    padded_sequence = pad_sequences(sequence, maxlen=maxlen)
-    # Predict the tag of the sentence
-    prediction = model.predict(padded_sequence)[0]
-    predicted_label_index = np.argmax(prediction)
-    predicted_label = index_to_label[predicted_label_index]
-    # Return a sentence based on the predicted tag
-    for intent in data["intents"]:
-        if intent["tag"] == predicted_label:
-            return np.random.choice(intent["responses"])
+model.fit(training, output, n_epoch=1000, batch_size=8, show_metric=True)
+model.save("model.tflearn")
 
 # Commands
 
@@ -146,20 +128,15 @@ def getAllMovies():
 
 async def handleResponse(text: str) -> str:
     processed: str = text.lower()  # convert text to lower case
-    message = predict_tag(processed)
-    if message == "Okay, I will start":
-        print("start asking defined questions")
-        return message
-    return message
-
-    # if 'hello' in processed:
-    #    return 'hi buddy'
-    # if 'trailer' in processed:
-    #    return search_video(processed, YT_key)
-    # if 'how many' in processed:
-    #    return 'i have a database with +2000 tv series'
-    # else:
-    #    return 'i dont understand'
+    analyzeWithSpacy(processed)
+    if 'hello' in processed:
+        return 'hi buddy'
+    if 'trailer' in processed:
+        return search_video(processed, YT_key)
+    if 'how many' in processed:
+        return 'i have a database with +2000 tv series'
+    else:
+        return 'i dont understand'
 
 
 async def handleMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -215,7 +192,6 @@ async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Main
 if __name__ == '__main__':
-    #print(predict_tag("start recommending tv series please"))
     movies = getAllMovies()
     print('Starting bot...')
     app = Application.builder().token(TOKEN).build()

@@ -32,76 +32,6 @@ BOT_USERNAME: Final = '@MecagoensatanasBot'
 YT_key: Final = 'AIzaSyBxNofXCt8LaoBJri2_lBhJGFWSMXM-oCE'
 
 
-# Load the data
-with open("data/intents.json") as file:
-    data = json.load(file)
-
-# Extract the training data
-sentences = []
-labels = []
-for intent in data["intents"]:
-    for pattern in intent["patterns"]:
-        sentences.append(pattern)
-        labels.append(intent["tag"])
-
-# Tokenize the sentences
-tokenizer = Tokenizer()
-tokenizer.fit_on_texts(sentences)
-word_index = tokenizer.word_index
-
-# Convert the sentences to sequences
-sequences = tokenizer.texts_to_sequences(sentences)
-
-# Pad the sequences
-maxlen = 20
-padded_sequences = pad_sequences(sequences, maxlen=maxlen)
-
-# Convert the labels to one-hot vectors
-labels = np.array(labels)
-unique_labels = np.unique(labels)
-label_to_index = dict((label, index)
-                      for index, label in enumerate(unique_labels))
-index_to_label = dict((index, label)
-                      for index, label in enumerate(unique_labels))
-label_indices = np.array([label_to_index[label] for label in labels])
-one_hot_labels = tf.keras.utils.to_categorical(label_indices)
-
-# Define the model
-model = Sequential([
-    Embedding(len(word_index) + 1, 128, input_length=maxlen),
-    Flatten(),
-    Dense(128, activation="relu"),
-    Dropout(0.5),
-    Dense(len(unique_labels), activation="softmax")
-])
-
-# Compile the model
-model.compile(loss="categorical_crossentropy",
-              optimizer="adam", metrics=["accuracy"])
-
-# Train the model
-model.fit(padded_sequences, one_hot_labels,
-          epochs=1000, batch_size=8, verbose=1)
-
-# Save the model
-model.save("model.h5")
-
-# predict to which category the input belongs to
-
-
-def predict_tag(sentence):
-    # Convert the sentence to a sequence
-    sequence = tokenizer.texts_to_sequences([sentence])
-    padded_sequence = pad_sequences(sequence, maxlen=maxlen)
-    # Predict the tag of the sentence
-    prediction = model.predict(padded_sequence)[0]
-    predicted_label_index = np.argmax(prediction)
-    predicted_label = index_to_label[predicted_label_index]
-    # Return a sentence based on the predicted tag
-    for intent in data["intents"]:
-        if intent["tag"] == predicted_label:
-            return np.random.choice(intent["responses"])
-
 # Commands
 
 
@@ -146,20 +76,15 @@ def getAllMovies():
 
 async def handleResponse(text: str) -> str:
     processed: str = text.lower()  # convert text to lower case
-    message = predict_tag(processed)
-    if message == "Okay, I will start":
-        print("start asking defined questions")
-        return message
-    return message
-
-    # if 'hello' in processed:
-    #    return 'hi buddy'
-    # if 'trailer' in processed:
-    #    return search_video(processed, YT_key)
-    # if 'how many' in processed:
-    #    return 'i have a database with +2000 tv series'
-    # else:
-    #    return 'i dont understand'
+    analyzeWithSpacy(processed)
+    if 'hello' in processed:
+        return 'hi buddy'
+    if 'trailer' in processed:
+        return search_video(processed, YT_key)
+    if 'how many' in processed:
+        return 'i have a database with +2000 tv series'
+    else:
+        return 'i dont understand'
 
 
 async def handleMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -215,7 +140,6 @@ async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Main
 if __name__ == '__main__':
-    #print(predict_tag("start recommending tv series please"))
     movies = getAllMovies()
     print('Starting bot...')
     app = Application.builder().token(TOKEN).build()
