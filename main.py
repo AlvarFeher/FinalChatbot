@@ -147,6 +147,8 @@ def getAllMovies():
 async def handleResponse(text: str) -> str:
     processed: str = text.lower()  # convert text to lower case
     message = predict_tag(processed)
+    if 'trailer' in processed:
+        return search_video(processed, YT_key)
     if message == "Okay, I will start":
         print("start asking defined questions")
         return message
