@@ -20,7 +20,6 @@ import spacy
 import json
 import random
 import tensorflow as tf
-import tflearn
 from googleapiclient.discovery import build
 from typing import Final
 import csv
@@ -106,16 +105,18 @@ def predict_tag(sentence):
 
 
 async def startCommand(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("hello, i recommend tv series")
+    await update.message.reply_text("Hi! I'm here to recommend TV Series. Talk to me and discover what I have to offer ;)")
 
 
 async def helpCommand(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("answer the questions so i can recommend tv series ")
+    await update.message.reply_text("Need help huh?\nYou can just talk to me and i'll try my best to answer something that makes sense.\nIf you ask for a questionaire i'll eventually recommend something\n(I can also give you trailers from tv series, that's cool right?)")
 
 
 async def stopCommand(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("cya buddy")
     context.bot.stop()
+
+# get all movies from the dataset
 
 
 def getAllMovies():
@@ -154,21 +155,13 @@ async def handleResponse(text: str) -> str:
         return message
     return message
 
-    # if 'hello' in processed:
-    #    return 'hi buddy'
-    # if 'trailer' in processed:
-    #    return search_video(processed, YT_key)
-    # if 'how many' in processed:
-    #    return 'i have a database with +2000 tv series'
-    # else:
-    #    return 'i dont understand'
-
 
 async def handleMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text: str = update.message.text
     response: str = await handleResponse(text)
     print('Bot:', response)
     await update.message.reply_text(response)
+
 
 # YouTube API
 
@@ -191,33 +184,14 @@ def search_video(title, api_key):
 
     return video_link
 
-# spaCy
-
-
-def analyzeWithSpacy(user_input: str):
-    nlp = spacy.load("en_core_web_sm")
-    doc = nlp(user_input)
-    for entity in doc.ents:
-        print(entity.label)
-        if entity.label_ == "FILM":
-            print("im talking about movies")
-            return True
-            print("Movie mentioned:", entity.text)
-            # Perform further analysis based on the movie entity
-            # For example, you can check if the user expressed a preference or dislike for the movie
-            if "love" in user_input.lower():
-                print("User expressed love for the movie.")
-            elif "dislike" in user_input.lower():
-                print("User expressed dislike for the movie.")
-
-
 # Errors
+
+
 async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(f'error caused by {update}: {context.error}')
 
 # Main
 if __name__ == '__main__':
-    #print(predict_tag("start recommending tv series please"))
     movies = getAllMovies()
     print('Starting bot...')
     app = Application.builder().token(TOKEN).build()
