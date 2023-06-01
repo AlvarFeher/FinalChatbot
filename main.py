@@ -30,6 +30,9 @@ TOKEN: Final = "6072166464:AAGK_3kc39vEAGwhNR2on90NZ95KXNNpQ-Y"  # bot token
 BOT_USERNAME: Final = '@MecagoensatanasBot'
 YT_key: Final = 'AIzaSyBxNofXCt8LaoBJri2_lBhJGFWSMXM-oCE'
 
+qStarted: bool = False
+qIndex: int = 0  # test question index
+
 
 # Load the data
 with open("data/intents.json") as file:
@@ -116,6 +119,8 @@ async def stopCommand(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("cya buddy")
     context.bot.stop()
 
+# async def resultCommand():
+
 # get all movies from the dataset
 
 
@@ -146,26 +151,71 @@ def getAllMovies():
 
 
 async def handleResponse(text: str) -> str:
-    processed: str = text.lower()  # convert text to lower case
-    message = predict_tag(processed)
+    processed: str = text.lower()  # convert user input text to lower case
     if 'trailer' in processed:
         return search_video(processed, YT_key)
-    if message == "Okay, I will start":
-        print("start asking defined questions")
+    elif processed == "/exit":
+        return "Exiting questionnaire..."
+    else:
+        message = predict_tag(processed)
         return message
-    return message
 
 
 async def handleMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text: str = update.message.text
-    response: str = await handleResponse(text)
-    print('Bot:', response)
-    await update.message.reply_text(response)
+    text: str = update.message.text  # user input
+    global qStarted
+    global qIndex
+    questions = ["q1", "q2", "q3"]
+    if text == "/questions":
+        qStarted = True
+        await update.message.reply_text("Starting questionnaire...")
+    elif qStarted:
+        await update.message.reply_text(questions[qIndex])
+        answer: str = await handleQuestion(text)
+        await update.message.reply_text(answer)
+        qIndex = qIndex + 1
+    else:
+        response: str = await handleResponse(text)
+        print('Bot:', response)
+        await update.message.reply_text(response)
+
+
+async def handleQuestion(input: str):
+    # detect what has been asked and prune tv series
+    # reply with text
+    # use global variables for this, to detect if questions finished and detect question index in array
+    global qIndex
+
+    return input
+
+# when the user inputs the command /questions, start the questionaire
+
+
+async def startQuestionnaire(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    questions = ["q1", "q2", "q3"]
+    answers = []
+    global qStarted
+    qStarted = True
+    while qStarted:
+        for q in questions:
+            await update.message.reply_text(q)
+            # answer = await context.bot.await_message(chat_id=update.message.chat_id, timeout=30)
+            answer = update.message.text
+            print(answer)
+            if answer is None:
+                await update.message.reply_text("Time's up! Exiting questionnaire...")
+                qStarted = False
+                return
+            elif answer.text.lower() == "exit":
+                await update.message.reply_text("Exiting questionnaire...")
+                qStarted = False
+                return
+            answers.append(answer.text)
+    await update.message.reply_text("Thank you for answering the questions!")
+    print(answers)
 
 
 # YouTube API
-
-
 def search_video(title, api_key):
     youtube = build('youtube', 'v3', developerKey=api_key)
 
@@ -204,10 +254,10 @@ if __name__ == '__main__':
     # Messages
     app.add_handler(MessageHandler(filters.Text(), handleMessage))
 
+    app.add_handler(MessageHandler(filters.Text(), handleQuestion))
+
     # Errors
     app.add_error_handler(error)
-
-    #print(search_video('game of thrones trailer', YT_key))
 
     # Polling bot
     print('Started polling...')

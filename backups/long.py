@@ -150,40 +150,22 @@ def getAllMovies():
 
 async def handleResponse(text: str) -> str:
     processed: str = text.lower()  # convert user input text to lower case
+    message = predict_tag(processed)
     if 'trailer' in processed:
         return search_video(processed, YT_key)
-    elif processed == "/exit":
-        return "Exiting questionnaire..."
-    else:
-        message = predict_tag(processed)
+    if message == "Okay, I will start":
+        print("start asking defined questions")
+        qStarted = True
+        startQuestionnaire()
         return message
+    return message
 
 
 async def handleMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text: str = update.message.text
-    global qStarted
     if text == "/questions" or qStarted:
         await update.message.reply_text("Starting questionnaire...")
-        # await startQuestionnaire(update, context)
-        questions = ["q1", "q2", "q3"]
-        answers = []
-        qStarted = True
-        while qStarted:
-            for q in questions:
-                await update.message.reply_text(q)
-                # answer = await context.bot.await_message(chat_id=update.message.chat_id, timeout=30)
-                answer = update.message.text
-                print(answer)
-                if answer is None:
-                    await update.message.reply_text("Time's up! Exiting questionnaire...")
-                    qStarted = False
-                    return
-                elif answer == "exit":
-                    await update.message.reply_text("Exiting questionnaire...")
-                    qStarted = False
-                    return
-                answers.append(answer)
-        await update.message.reply_text("Thank you for answering the questions!")
+        await startQuestionnaire(update, context)
     else:
         response: str = await handleResponse(text)
         print('Bot:', response)
@@ -194,23 +176,17 @@ async def handleMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def startQuestionnaire(update: Update, context: ContextTypes.DEFAULT_TYPE):
     questions = ["q1", "q2", "q3"]
     answers = []
-    global qStarted
     qStarted = True
-    while qStarted:
-        for q in questions:
-            await update.message.reply_text(q)
-            # answer = await context.bot.await_message(chat_id=update.message.chat_id, timeout=30)
-            answer = update.message.text
-            print(answer)
-            if answer is None:
-                await update.message.reply_text("Time's up! Exiting questionnaire...")
-                qStarted = False
-                return
-            elif answer.text.lower() == "exit":
-                await update.message.reply_text("Exiting questionnaire...")
-                qStarted = False
-                return
-            answers.append(answer.text)
+    for q in questions:
+        await update.message.reply_text(q)
+        # answer = (await context.bot.await_messages(update.message.chat_id, timeout=30)).text
+        answer = (await context.bot.await_messages(update.message.chat_id, timeout=30)).text
+        # await answer
+        if answer.lower() == "/exit":
+            await update.message.reply_text("Exiting questionnaire...")
+            qStarted = False
+            return
+        answers.append(answer)
     await update.message.reply_text("Thank you for answering the questions!")
     print(answers)
 

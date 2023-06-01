@@ -23,6 +23,21 @@
          "patterns": ["Start the questionnare", "Recommend movies", "Recommend me movies", "Start"],
          "responses": ["Okay, I will start"],
          "context_set": ""
-        }
+        },
+        {"tag": "help",
+         "patterns": ["What can you do", "What are you capable of", "help me"],
+         "responses": ["I won't take over the world, i recommend tv series", "I can help you find a tv series if you ask for my questionaire"],
+         "context_set": ""
+        },
+        {"tag": "genre",
+         "patterns": ["Action", "Comedy", "Romance","Thriller","Romance"],
+         "responses": ["So that's about genres...got it"],
+         "context_set": ""
+        },
+        {"tag": "longDuration",
+        "patterns": ["long", "large", "high duration"],
+        "responses": ["So you like long series...okay bruv"],
+        "context_set": ""
+       }
    ]
 }
