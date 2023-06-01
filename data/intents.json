@@ -21,7 +21,7 @@
         },
         {"tag": "startGame",
          "patterns": ["Start the questionnare", "Recommend movies", "Recommend me movies", "Start"],
-         "responses": ["Okay, I will start"],
+         "responses": ["Okay, use /questions"],
          "context_set": ""
         },
         {"tag": "help",
