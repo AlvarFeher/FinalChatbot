@@ -33,6 +33,11 @@
          "patterns": ["What can you do", "What are you capable of", "help me"],
          "responses": ["I won't take over the world, i recommend tv series", "I can help you find a tv series if you ask for my questionaire"],
          "context_set": ""
+        },
+        {"tag": "thanks",
+         "patterns": ["Thanks", "Thank you", "Great"],
+         "responses": ["I'm glad i helped you! :)", "You are welcome chief"],
+         "context_set": ""
         }
    ]
 }

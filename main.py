@@ -4,7 +4,6 @@ from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Embedding, Flatten
-
 import json
 import numpy as np
 from telegram import *
@@ -16,6 +15,7 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+
 import spacy
 import json
 import random
@@ -24,6 +24,7 @@ from googleapiclient.discovery import build
 from typing import Final
 import csv
 import nltk
+import requests
 stemmer = LancasterStemmer()
 
 TOKEN: Final = "6072166464:AAGK_3kc39vEAGwhNR2on90NZ95KXNNpQ-Y"  # bot token
@@ -32,7 +33,7 @@ YT_key: Final = 'AIzaSyBxNofXCt8LaoBJri2_lBhJGFWSMXM-oCE'
 
 qStarted: bool = False
 qIndex: int = 0  # test question index
-
+similarStarted: bool = False
 
 # Load the data
 with open("data/intents.json") as file:
@@ -119,6 +120,33 @@ async def stopCommand(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("cya buddy")
     context.bot.stop()
 
+
+async def getSimilarShows(text: str):
+    global similarStarted
+
+    API_KEY = '4ec06d8570075916af7293379cbf5430'
+
+    # Search for the TV show you want to find similar shows to
+    url = f"https://api.themoviedb.org/3/search/tv?api_key={API_KEY}&query={text}"
+    response = requests.get(url)
+    results = response.json()["results"]
+
+    # Get the ID of the first search result
+    tv_id = results[0]["id"]
+
+    # Get the similar TV shows
+    url = f"https://api.themoviedb.org/3/tv/{tv_id}/similar?api_key={API_KEY}"
+    response = requests.get(url)
+    similar_shows = response.json()["results"]
+
+    # Print the titles of the three most similar shows
+    for show in similar_shows[:3]:
+        print(show["name"])
+    similarStarted = False
+
+    return similar_shows
+
+
 # async def resultCommand():
 
 # get all movies from the dataset
@@ -165,6 +193,7 @@ async def handleMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text: str = update.message.text  # user input
     global qStarted
     global qIndex
+    global similarStarted
     questions = ["q1", "q2", "q3"]
     if text == "/questions":
         qStarted = True
@@ -174,6 +203,14 @@ async def handleMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
         answer: str = await handleQuestion(text)
         await update.message.reply_text(answer)
         qIndex = qIndex + 1
+    elif text == "/similar":
+        similarStarted = True
+        await update.message.reply_text("Give me the name of a tv-show please: ")
+    elif similarStarted:
+        print("similar ongoing")
+        similarShows = await getSimilarShows(text)
+        for show in similarShows[:3]:
+            await update.message.reply_text(show["name"])
     else:
         response: str = await handleResponse(text)
         print('Bot:', response)
@@ -250,7 +287,6 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler('start', startCommand))
     app.add_handler(CommandHandler('help', helpCommand))
     app.add_handler(CommandHandler('stop', stopCommand))
-
     # Messages
     app.add_handler(MessageHandler(filters.Text(), handleMessage))
 
