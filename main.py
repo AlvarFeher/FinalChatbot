@@ -105,7 +105,7 @@ def predict_tag(sentence):
         if intent["tag"] == predicted_label:
             return np.random.choice(intent["responses"])
 
-# Commands
+# Commands aa
 
 
 async def startCommand(update: Update, context: ContextTypes.DEFAULT_TYPE):
