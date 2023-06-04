@@ -22,12 +22,17 @@ from googleapiclient.discovery import build
 from typing import Final
 import csv
 import nltk
+nltk.download("punkt")
+nltk.download("vader_lexicon")
+nltk.download("stopwords")
+nltk.download("wordnet")
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.sentiment import SentimentIntensityAnalyzer
 from datetime import datetime
 from word2number import w2n
+
 
 stemmer = LancasterStemmer()
 
