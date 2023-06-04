@@ -3,4 +3,4 @@ nltk
 tensorflow
 numpy
 google-api-python-client
-
+typing
