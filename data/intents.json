@@ -25,8 +25,8 @@
          "context_set": ""
         },
         {"tag": "similar",
-         "patterns": ["I like", "I love", "similar"],
-         "responses": ["Okay, use /similar"],
+         "patterns": ["I like", "I love", "i want similar tv series", "i want similar shows"],
+         "responses": ["I suggest that you use the /similar command, buddy"],
          "context_set": ""
         },
         {"tag": "help",

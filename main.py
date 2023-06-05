@@ -27,8 +27,8 @@ import nltk
 import requests
 stemmer = LancasterStemmer()
 
-TOKEN: Final = "6072166464:AAGK_3kc39vEAGwhNR2on90NZ95KXNNpQ-Y"  # bot token
-BOT_USERNAME: Final = '@MecagoensatanasBot'
+TOKEN: Final = "6057172707:AAHfoG_sVZ2aEbZXVF3lvx5PW-LUGgPnWrU"  # bot token
+BOT_USERNAME: Final = '@@feherTestbot'
 YT_key: Final = 'AIzaSyBxNofXCt8LaoBJri2_lBhJGFWSMXM-oCE'
 
 qStarted: bool = False
